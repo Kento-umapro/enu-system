@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
 <title>E&U 店舗システム</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,6 +32,7 @@ body{margin:0; min-height:100dvh; background:var(--bg); color:var(--ink);
 .mark{display:flex; align-items:center; gap:.5rem; font-weight:700; font-size:1.15rem; margin-bottom:.15rem}
 .mark i{width:.55rem; height:.55rem; border-radius:50%; background:var(--brand); display:block}
 .mark small{font-weight:400; font-size:.7rem; color:var(--faint); letter-spacing:.12em; font-family:"IBM Plex Mono",monospace}
+.demopill{font-size:.62rem; font-weight:700; letter-spacing:.06em; background:#8a5c00; color:#FFF6E2; border-radius:2rem; padding:.08rem .45rem}
 .lede{color:var(--muted); font-size:.86rem; margin:0 0 1.2rem}
 form{background:var(--surface); border:1px solid var(--rule); border-radius:.6rem; padding:1.1rem 1.15rem 1.2rem;
   box-shadow:0 1px 2px rgba(23,29,25,.05),0 14px 30px -24px rgba(23,29,25,.5)}
@@ -47,8 +50,8 @@ button:disabled{opacity:.6; cursor:progress}
 </head>
 <body>
 <div class="gate">
-  <div class="mark"><i></i>E&amp;U <small>SYSTEM</small></div>
-  <p class="lede">店舗システムのプロトタイプです。合言葉を入れてください。</p>
+  <div class="mark"><i></i>E&amp;U <small>SYSTEM</small><span class="demopill">DEMO</span></div>
+  <p class="lede">店舗システムの<strong>デモ画面</strong>です。合言葉を入れてください。</p>
   <form id="f">
     <label for="pw">合言葉</label>
     <input id="pw" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required>
