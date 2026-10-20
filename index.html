@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>E&U 店舗システム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#F2F4EF; --surface:#FFFFFF; --ink:#171D19; --muted:#56625A; --faint:#828E86;
+  --rule:#DDE3D8; --rule-2:#C6D0C0; --brand:#2E6B4C; --brand-ink:#FFFFFF; --crit:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1210; --surface:#191E18; --ink:#E9EFE5; --muted:#A2AE9C; --faint:#79856F;
+    --rule:#2A322A; --rule-2:#3B463A; --brand:#84C6A0; --brand-ink:#0E1510; --crit:#E58282;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1210; --surface:#191E18; --ink:#E9EFE5; --muted:#A2AE9C; --faint:#79856F;
+  --rule:#2A322A; --rule-2:#3B463A; --brand:#84C6A0; --brand-ink:#0E1510; --crit:#E58282;
+}
+*{box-sizing:border-box}
+body{margin:0; min-height:100dvh; background:var(--bg); color:var(--ink);
+  font-family:"Zen Kaku Gothic New",-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+  display:grid; place-items:center; padding:1.5rem; line-height:1.75; -webkit-font-smoothing:antialiased}
+.gate{width:100%; max-width:23rem}
+.mark{display:flex; align-items:center; gap:.5rem; font-weight:700; font-size:1.15rem; margin-bottom:.15rem}
+.mark i{width:.55rem; height:.55rem; border-radius:50%; background:var(--brand); display:block}
+.mark small{font-weight:400; font-size:.7rem; color:var(--faint); letter-spacing:.12em; font-family:"IBM Plex Mono",monospace}
+.lede{color:var(--muted); font-size:.86rem; margin:0 0 1.2rem}
+form{background:var(--surface); border:1px solid var(--rule); border-radius:.6rem; padding:1.1rem 1.15rem 1.2rem;
+  box-shadow:0 1px 2px rgba(23,29,25,.05),0 14px 30px -24px rgba(23,29,25,.5)}
+label{display:block; font-size:.78rem; font-weight:700; color:var(--muted); margin-bottom:.35rem}
+input{width:100%; font:inherit; font-size:1rem; padding:.6rem .7rem; border-radius:.35rem;
+  border:1px solid var(--rule-2); background:var(--bg); color:var(--ink); letter-spacing:.2em}
+input:focus{outline:2px solid var(--brand); outline-offset:1px}
+button{width:100%; margin-top:.7rem; font:inherit; font-size:.92rem; font-weight:700; cursor:pointer;
+  border:0; border-radius:.35rem; padding:.68rem; background:var(--brand); color:var(--brand-ink)}
+button:disabled{opacity:.6; cursor:progress}
+.msg{font-size:.8rem; margin-top:.6rem; min-height:1.2rem; color:var(--crit); font-weight:700}
+.msg.info{color:var(--faint); font-weight:400}
+.note{font-size:.74rem; color:var(--faint); margin-top:1rem; line-height:1.7}
+</style>
+</head>
+<body>
+<div class="gate">
+  <div class="mark"><i></i>E&amp;U <small>SYSTEM</small></div>
+  <p class="lede">店舗システムのプロトタイプです。合言葉を入れてください。</p>
+  <form id="f">
+    <label for="pw">合言葉</label>
+    <input id="pw" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required>
+    <button id="go" type="submit">開く</button>
+    <div class="msg" id="msg" role="status"></div>
+  </form>
+  <p class="note">データはすべてダミーです。実在の売上・スタッフ・取引先ではありません。<br>注文データはこの端末のブラウザにのみ保存されます。</p>
+</div>
+<script>
+/* ゲートの変数がアプリ側のグローバルと衝突しないよう、すべて関数スコープに閉じる */
+(()=>{
+const $=s=>document.querySelector(s);
+const msg=(t,info)=>{const m=$("#msg"); m.textContent=t; m.className="msg"+(info?" info":"");};
+let blob=null;
+async function payload(){
+  if(blob) return blob;
+  const r=await fetch("app.enc",{cache:"no-store"});
+  if(!r.ok) throw new Error("fetch");
+  const b64=(await r.text()).trim();
+  const bin=atob(b64); const u=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  blob=u; return u;
+}
+async function unlock(pw){
+  const u=await payload();
+  const salt=u.slice(0,16), iv=u.slice(16,28), body=u.slice(28);
+  const km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:200000,hash:"SHA-256"},
+    km,{name:"AES-GCM",length:256},false,["decrypt"]);
+  const plain=await crypto.subtle.decrypt({name:"AES-GCM",iv},key,body);
+  return new TextDecoder().decode(plain);
+}
+function boot(html){
+  document.open(); document.write(html); document.close();
+}
+$("#f").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const pw=$("#pw").value.trim(); if(!pw)return;
+  $("#go").disabled=true; msg("開いています…",true);
+  try{
+    const html=await unlock(pw);
+    try{sessionStorage.setItem("enu-pw",pw);}catch(_){}
+    boot(html);
+  }catch(err){
+    $("#go").disabled=false;
+    msg(err&&err.message==="fetch"?"データを読み込めませんでした。再読み込みしてください。":"合言葉が違います。");
+    $("#pw").select();
+  }
+});
+(async()=>{
+  let saved=null; try{saved=sessionStorage.getItem("enu-pw");}catch(_){}
+  if(!saved)return;
+  try{ boot(await unlock(saved)); }catch(_){ try{sessionStorage.removeItem("enu-pw");}catch(__){} }
+})();
+})();
+</script>
+</body>
+</html>
